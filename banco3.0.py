@@ -29,11 +29,7 @@ class PessoaFisica(Cliente):
         self._data_nascimento = data_nascimento
     
     def __str__(self) -> str:
-        return f"""
-            CPF : {self._cpf}
-            Nome: {self._nome}
-            Data de Nascimento: {self._data_nascimento}
-            """
+        return f"CPF : {self._cpf}, Nome: {self._nome}"
 
    
 class Conta:
@@ -53,7 +49,9 @@ class Conta:
         pass
     
     def sacar(self, valor):
-        """ num_saques=0
+        
+        num_saques=0
+        
         for historico in self._historico._transacoes:
             if historico._tipo == "Saque":
                 num_saques += 1
@@ -63,7 +61,7 @@ class Conta:
             return False
         else:
             self._saldo -= valor
-            self._historico.adicionar_transacao(saque) """
+            self._historico.adicionar_transacao(saque) 
         return True
     
     def depositar(self, valor):
@@ -154,6 +152,13 @@ class Banco:
             print("CPF deve conter 11 números!")
         return False
     
+    def listar_contas(self, contas, cliente):
+        print(f"\n####################### LISTAGEM DE CONTAS #######################")
+        print(f"Cliente: {cliente._nome} CPF: {cliente._cpf}")
+        print("-------------------------- Contas: ------------------------------")
+        for conta in contas:
+            print(f"Agência: {conta._agencia}, Número: {conta._numero}, Saldo: {conta.saldo}")
+
     def buscar_cliente(self, cpf):
         for cliente in self._clientes:
             if cliente._cpf == cpf:
@@ -166,6 +171,18 @@ class Banco:
             if conta._cliente._cpf == cpf:
                 minhas_contas.append(conta)
         return minhas_contas 
+    
+    def buscar_conta_numero(self, numero):
+        
+        for conta in self._contas:
+            if conta._numero == numero:
+                return conta
+        return print("Conta não encontrada!")
+    
+    def listar_clientes(self):
+        print("--------------------- LISTAGEM DE CLIENTES ---------------------")
+        for cliente in self._clientes:
+            print(cliente)
 
 
 menu = """
@@ -175,17 +192,14 @@ menu = """
 3. Extrato
 4. Cadastrar Cliente
 5. Cadastrar Conta Corrente
-6. Listar Usuários
-7. Listar Contas
+6. Listar Clientes
+7. Listar Contas do Cliente
 8. Sair
 ####################################
 """
 
-pf1 = PessoaFisica("11111111111", "João Miguel Alves", date, "rua A, 11, Centro, Aurora-CE")
 banco = Banco()
-banco.adicionar_cliente(pf1)
-conta1 = Conta(1, pf1)
-banco.adicionar_conta(conta1)
+numero = 0
 
 while True:
     
@@ -195,24 +209,61 @@ while True:
     
     if op == 1:
                
-        print("\n########################### DEPÓSITO ###########################\n")
+        print("""\n########################### DEPÓSITO ###########################
         
-        cpf = input("Informe seu CPF: ")
+        1. Informar CPF
+        2. Informa NÚMERO DA CONTA
         
-        while not banco.valida_cpf(cpf):
+        \n""")
+        
+        opdep = int(input("Digite uma opção: "))
+
+        if opdep == 1:
+            
             cpf = input("Informe seu CPF: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe seu CPF: ")
+            
+            cliente = banco.buscar_cliente(cpf)
+            
+            if cliente:
+                contas = banco.buscar_conta(cpf)
+            else:
+                print("Cliente não cadastrado!")
         
-        pessoa = banco.buscar_cliente(cpf)
+        elif opdep == 2:
+            
+            numero = int(input("Informe o número da CONTA: "))
+            
+            while not isinstance(numero, int):
+                numero = input("Informe um número para a CONTA: ")
+            
+            conta = banco.buscar_conta_numero(numero)
+            
+            while not isinstance(conta, Conta):
+                numero = int(input("Informe um número de CONTA válido: "))
+                while not isinstance(numero, int):
+                    numero = input("Informe um número para a CONTA: ")
+                conta = banco.buscar_conta_numero(numero)
+            
+            contas = []
+            contas.append(conta)
         
-        contas = banco.buscar_conta(cpf)
-        
+        else:
+            opdep = int(input("Digite uma opção válida: "))
+
         quant_contas = len(contas)
-                
+        
+        if quant_contas == 0:
+            indice = 0
+
         for conta in contas:
             print(conta)
                
             if quant_contas == 0:
                 print("Cliente não possui conta!")
+                indice = 0
             elif quant_contas == 1:
                 conta = contas[0]
                 indice = 1
@@ -222,85 +273,172 @@ while True:
                     indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))
                 conta = contas[indice - 1] 
         
-        valor = float(input("\nDigite o valor do depósito: R$ "))
-        deposito = Deposito(valor)
-        deposito.registrar(conta)
-        print("\n",contas[indice - 1])
-        
+        if indice > 0:
+            valor = float(input("\nDigite o valor do depósito: R$ "))
+            deposito = Deposito(valor)
+            if deposito:
+                deposito.registrar(conta)
+                print("\n",contas[indice - 1])
+            else:
+                print("ERRO: Depósito não efetuado!")
+    
     elif op == 2:
-        """ print("############################### SAQUE ###############################")
-        valor = float(input("Digite o valor do saque:"))
-        retorno = sacar(saldo=saldo, valor=valor, extrato=extrato, limite=LIMITE, numero_saques=numero_saques, limite_saques=LIMITE_SAQUES)
-        saldo = retorno[0]
-        extrato = retorno[1]
-        numero_saques = retorno[2]
-        print(saldo)
-        print(numero_saques) """
+                       
+        print("""\n########################### SAQUE ###########################
+        
+        1. Informar CPF
+        2. Informa NÚMERO DA CONTA
+        
+        \n""")
+        
+        opsaq = int(input("Digite uma opção: "))
+
+        if opsaq == 1:
+            
+            cpf = input("Informe seu CPF: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe seu CPF: ")
+            
+            pessoa = banco.buscar_cliente(cpf)
+            
+            contas = banco.buscar_conta(cpf)
+        
+        elif opsaq == 2:
+            
+            numero = int(input("Informe o número da CONTA: "))
+            
+            while not isinstance(numero, int):
+                numero = int(input("Informe um número para a CONTA: "))
+            
+            conta = banco.buscar_conta_numero(numero)
+
+            while not isinstance(conta, Conta):
+                numero = int(input("Informe um número de CONTA válido: "))
+                while not isinstance(numero, int):
+                    numero = int(input("Informe um número para a CONTA: "))
+                conta = banco.buscar_conta_numero(numero)
+            
+            contas = []
+            contas.append(conta)
+        
+        else:
+            opsaq = int(input("Digite uma opção válida: "))
+
+        quant_contas = len(contas)
+        
+        if quant_contas == 0:
+            indice = 0
+
+        for conta in contas:
+            print(conta)
+               
+            if quant_contas == 0:
+                print("Cliente não possui conta!")
+                indice = 0
+            elif quant_contas == 1:
+                conta = contas[0]
+                indice = 1
+            else:
+                indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))   
+                while indice > quant_contas:
+                    indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))
+                conta = contas[indice - 1] 
+        
+        if indice > 0:
+            valor = float(input("\nDigite o valor do SAQUE: R$ "))
+            saque = Saque(valor)
+            if saque:
+                saque.registrar(conta)
+                print("\n",contas[indice - 1])
+            else:
+                print("ERRO: Saque não efetuado!")
+    
     elif op == 3:
-        """ visualizar_extrato(saldo, extrato=extrato) """
+        
+        numero = int(input("Informe o número da CONTA: "))
+            
+        while not isinstance(numero, int):
+            numero = input("Informe um número para a CONTA: ")
+        
+        conta = banco.buscar_conta_numero(numero)
+        
+        while not isinstance(conta, Conta):
+            numero = input("Informe um número de CONTA válido: ")
+        
+        print(conta)
+    
     elif op == 4:
-        """ print("######################### CADASTRAR USUÁRIO #########################")
-        cpf = input("CPF do usuário (apenas números): ")
-        while not isinstance(cpf, int) and not len(cpf)==11:
-            cpf = input("CPF do usuário (apenas números): ")    
-        nome = input("NOME do usuário: ")
-        data_nascimento = input("Data de Nascimento (dd/mm/aaaa): ")
+        
+        print("######################### CADASTRAR CLIENTE #########################")
+        
+        cpf = input("CPF do Cliente (apenas números): ")
+        
+        while not banco.valida_cpf(cpf):
+            cpf = input("CPF do Cliente (apenas números): ")   
+        
+        nome = input("NOME do Cliente: ")
+        data_nascimento = datetime.strptime(input("Data de Nascimento (dd/mm/aaaa): "), "%d/%m/%Y")
         endereco = input("Endereço (logradouro,num,bairro,cidade/uf): ")
-        usuarios = criar_usuario(cpf=cpf, nome=nome, data_nascimento=data_nascimento, endereco=endereco) """
+        cliente = PessoaFisica(cpf=cpf, nome=nome, data_nascimento=data_nascimento, endereco=endereco)
+        banco.adicionar_cliente(cliente)   
+        print(cliente)
+    
     elif op == 5:
-        """ print("##################### CADASTRAR CONTA CORRENTE #####################")
-        agencia = AGENCIA
-        conta = conta + 1
-        usuario = input("CPF do Titular da Conta: ")
-        while not usuario in usuarios:
-            usuario = input("CPF do Titular da Conta: ")
-        contas = criar_conta(agencia=agencia, conta=conta, usuario=usuario) """
+        
+        print("##################### CADASTRAR CONTA CORRENTE #####################")
+        
+        numero = numero + 1
+        
+        cpf = input("CPF do Titular da Conta: ")
+        
+        while not banco.valida_cpf(cpf):
+            cpf = input("Informe um CPF válido: ")
+        
+        cliente = banco.buscar_cliente(cpf)
+
+        while not isinstance(cliente, PessoaFisica):
+            
+            cpf = input("Informe o CPF de um Cliente cadastrado: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe um CPF válido: ")
+            
+            cliente = banco.buscar_cliente(cpf)
+
+        conta = Conta(numero, cliente)    
+        
+        banco.adicionar_conta(conta)
+
+        print(conta)
+        
     elif op == 6:  
-        """ listar_usuarios(usuarios) """
+        
+        banco.listar_clientes()
+
     elif op == 7:  
-        cpf = int(input("Informe o CPF para consultar suas contas: "))
+        
+        cpf = input("Informe o CPF para consultar suas contas: ")
+        
+        while not banco.valida_cpf:
+            cpf = input("Informe um CPF válido: ")
+        
+        cliente = banco.buscar_cliente(cpf)
+        
+        while not isinstance(cliente, Cliente):
+            cpf = input("Informe o CPF de um Cliente cadastrado: ")
+            while not banco.valida_cpf:
+                cpf = input("Informe um CPF válido: ")
+            cliente = banco.buscar_cliente(cpf)
+
+        contas = banco.buscar_conta(cpf)
+        banco.listar_contas(contas, cliente)
+
     elif op == 8:
         break
+    
     else:
         print("Opção inválida")
         
         
         
-""" strdata = "18/05/1982"
-data = datetime.strptime(strdata, "%d/%m/%Y")        
-
-pf1 = PessoaFisica("11111111111", "João Miguel Alves", data, "rua A, 11, Centro, Aurora-CE")   
-   
-conta1 = Conta(1, pf1)
-conta2 = Conta(2, pf1)
-
-pf1.adicionar_conta(conta1)
-pf1.adicionar_conta(conta2)
-
-pf2 = PessoaFisica("22222222222", "Antonio Miguel Alves", data, "rua B, 11, Centro, Aurora-CE")
-conta3 = Conta(3, pf2)
-pf2.adicionar_conta(conta3)
-
-deposito = Deposito(100.0)
-deposito.registrar(conta1)
-
-deposito = Deposito(200.0)
-deposito.registrar(conta1)
-print(conta1)
-
-saque = Saque(100.0)
-saque.registrar(conta1)
-
-print(conta1) """
-
-""" print("----------------------------------")
-print(f"Contas de : {pf1._nome}")
-for conta in pf1._contas:
-    print(conta)
-print("----------------------------------") """
-
-"""print(f"Contas de : {pf2._nome}")    
-for conta in pf2._contas:
-    print(conta)  
-print("----------------------------------") """
-            
