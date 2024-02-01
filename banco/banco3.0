@@ -1,0 +1,441 @@
+from abc import ABC, abstractclassmethod, abstractproperty
+from datetime import datetime, date
+
+
+class Cliente:
+    
+    def __init__(self, endereco) -> None:
+        self._endereco = endereco
+        
+    def realizar_transacao(self, conta, transacao):
+        pass
+    
+    
+class Historico:
+    
+    def __init__(self) -> None:
+        self._transacoes = []
+        
+    def adicionar_transacao(self, transacao):
+        self._transacoes.append(transacao)
+        
+       
+class PessoaFisica(Cliente):
+    
+    def __init__(self, cpf, nome, data_nascimento, endereco) -> None:
+        super().__init__(endereco) 
+        self._cpf = cpf
+        self._nome = nome
+        self._data_nascimento = data_nascimento
+    
+    def __str__(self) -> str:
+        return f"CPF : {self._cpf}, Nome: {self._nome}"
+
+   
+class Conta:
+    
+    def __init__(self, numero, cliente) -> None:
+        self._saldo = 0 
+        self._numero = numero
+        self._agencia = "0001"
+        self._cliente = cliente
+        self._historico = Historico()
+    
+    @property
+    def saldo(self):
+        return self._saldo
+    
+    def nova_conta(self, cliente, numero):
+        pass
+    
+    def sacar(self, valor):
+        
+        num_saques=0
+        
+        for historico in self._historico._transacoes:
+            if historico._tipo == "Saque":
+                num_saques += 1
+
+        contacorrente = ContaCorrente()
+        if valor <= 0 or num_saques > contacorrente.limite_saques or valor > contacorrente.limite:
+            return False
+        else:
+            self._saldo -= valor
+            self._historico.adicionar_transacao(saque) 
+        return True
+    
+    def depositar(self, valor):
+        if valor <= 0:
+            return False
+        else:
+            self._saldo += valor
+            self._historico.adicionar_transacao(deposito)
+            return True
+        
+    def __str__(self) -> str:
+        
+        extrato ="------------------------------------------------------------------------------"
+        extrato += f"\nCONTA: {self._numero}, AGENCIA: {self._agencia}"
+        extrato += f"\nTitular: {self._cliente._nome}"
+        
+        for historico in self._historico._transacoes:
+            extrato += f"\n{historico._tipo}: {historico._valor}"
+        
+        extrato += f"\nSaldo: {self.saldo}"
+        
+        return extrato
+    
+    
+class ContaCorrente(Conta):
+    
+    def __init__(self, limite=500.0, limite_saques=3):
+        self.limite = limite
+        self.limite_saques = limite_saques
+        
+        
+class Transacao(ABC):
+    
+    @classmethod
+    def registrar(conta):
+        pass
+    
+    
+class Deposito(Transacao):
+    
+    def __init__(self, valor) -> None:
+        self._valor = valor
+        self._tipo = "Deposito"
+    
+    @property
+    def valor(self):
+        return self._valor
+    
+    def registrar(self, conta):
+        if conta.depositar(self.valor):
+            print(f"Depósito de R$ {self.valor} realizado com sucesso!")
+
+
+class Saque(Transacao):
+    def __init__(self, valor) -> None:
+        self._valor = valor
+        self._tipo = "Saque"
+    
+    @property
+    def valor(self):
+        return self._valor
+    
+    def registrar(self, conta):
+        if conta.sacar(self.valor):
+            historico = Historico()
+            historico.adicionar_transacao(self)
+
+
+class Banco:
+    
+    def __init__(self) -> None:
+        self._clientes = []
+        self._contas = []
+
+    def adicionar_cliente(self, cliente):
+        self._clientes.append(cliente)
+        
+    def adicionar_conta(self, conta):
+        self._contas.append(conta)
+        
+    def valida_cpf(self, cpf):
+        if len(cpf) == 11:
+            if cpf.isnumeric:
+                return True
+            else:
+                print("Informe apenas números!")
+        else:
+            print("CPF deve conter 11 números!")
+        return False
+    
+    def listar_contas(self, contas, cliente):
+        print(f"\n####################### LISTAGEM DE CONTAS #######################")
+        print(f"Cliente: {cliente._nome} CPF: {cliente._cpf}")
+        print("-------------------------- Contas: ------------------------------")
+        for conta in contas:
+            print(f"Agência: {conta._agencia}, Número: {conta._numero}, Saldo: {conta.saldo}")
+
+    def buscar_cliente(self, cpf):
+        for cliente in self._clientes:
+            if cliente._cpf == cpf:
+                return cliente
+        return print("Cliente não cadastrado!")
+
+    def buscar_conta(self, cpf):
+        minhas_contas = []
+        for conta in self._contas:
+            if conta._cliente._cpf == cpf:
+                minhas_contas.append(conta)
+        return minhas_contas 
+    
+    def buscar_conta_numero(self, numero):
+        
+        for conta in self._contas:
+            if conta._numero == numero:
+                return conta
+        return print("Conta não encontrada!")
+    
+    def listar_clientes(self):
+        print("--------------------- LISTAGEM DE CLIENTES ---------------------")
+        for cliente in self._clientes:
+            print(cliente)
+
+
+menu = """
+############## MENU ################
+1. Depositar
+2. Sacar
+3. Extrato
+4. Cadastrar Cliente
+5. Cadastrar Conta Corrente
+6. Listar Clientes
+7. Listar Contas do Cliente
+8. Sair
+####################################
+"""
+
+banco = Banco()
+numero = 0
+
+while True:
+    
+    print(menu)
+    
+    op = int(input("Digite uma opção: "))
+    
+    if op == 1:
+               
+        print("""\n########################### DEPÓSITO ###########################
+        
+        1. Informar CPF
+        2. Informa NÚMERO DA CONTA
+        
+        \n""")
+        
+        opdep = int(input("Digite uma opção: "))
+
+        if opdep == 1:
+            
+            cpf = input("Informe seu CPF: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe seu CPF: ")
+            
+            cliente = banco.buscar_cliente(cpf)
+            
+            if cliente:
+                contas = banco.buscar_conta(cpf)
+            else:
+                print("Cliente não cadastrado!")
+        
+        elif opdep == 2:
+            
+            numero = int(input("Informe o número da CONTA: "))
+            
+            while not isinstance(numero, int):
+                numero = input("Informe um número para a CONTA: ")
+            
+            conta = banco.buscar_conta_numero(numero)
+            
+            while not isinstance(conta, Conta):
+                numero = int(input("Informe um número de CONTA válido: "))
+                while not isinstance(numero, int):
+                    numero = input("Informe um número para a CONTA: ")
+                conta = banco.buscar_conta_numero(numero)
+            
+            contas = []
+            contas.append(conta)
+        
+        else:
+            opdep = int(input("Digite uma opção válida: "))
+
+        quant_contas = len(contas)
+        
+        if quant_contas == 0:
+            indice = 0
+
+        for conta in contas:
+            print(conta)
+               
+            if quant_contas == 0:
+                print("Cliente não possui conta!")
+                indice = 0
+            elif quant_contas == 1:
+                conta = contas[0]
+                indice = 1
+            else:
+                indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))   
+                while indice > quant_contas:
+                    indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))
+                conta = contas[indice - 1] 
+        
+        if indice > 0:
+            valor = float(input("\nDigite o valor do depósito: R$ "))
+            deposito = Deposito(valor)
+            if deposito:
+                deposito.registrar(conta)
+                print("\n",contas[indice - 1])
+            else:
+                print("ERRO: Depósito não efetuado!")
+    
+    elif op == 2:
+                       
+        print("""\n########################### SAQUE ###########################
+        
+        1. Informar CPF
+        2. Informa NÚMERO DA CONTA
+        
+        \n""")
+        
+        opsaq = int(input("Digite uma opção: "))
+
+        if opsaq == 1:
+            
+            cpf = input("Informe seu CPF: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe seu CPF: ")
+            
+            pessoa = banco.buscar_cliente(cpf)
+            
+            contas = banco.buscar_conta(cpf)
+        
+        elif opsaq == 2:
+            
+            numero = int(input("Informe o número da CONTA: "))
+            
+            while not isinstance(numero, int):
+                numero = int(input("Informe um número para a CONTA: "))
+            
+            conta = banco.buscar_conta_numero(numero)
+
+            while not isinstance(conta, Conta):
+                numero = int(input("Informe um número de CONTA válido: "))
+                while not isinstance(numero, int):
+                    numero = int(input("Informe um número para a CONTA: "))
+                conta = banco.buscar_conta_numero(numero)
+            
+            contas = []
+            contas.append(conta)
+        
+        else:
+            opsaq = int(input("Digite uma opção válida: "))
+
+        quant_contas = len(contas)
+        
+        if quant_contas == 0:
+            indice = 0
+
+        for conta in contas:
+            print(conta)
+               
+            if quant_contas == 0:
+                print("Cliente não possui conta!")
+                indice = 0
+            elif quant_contas == 1:
+                conta = contas[0]
+                indice = 1
+            else:
+                indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))   
+                while indice > quant_contas:
+                    indice = int(input("Escolha a Conta (1-Primeira, 2-Segunda,): "))
+                conta = contas[indice - 1] 
+        
+        if indice > 0:
+            valor = float(input("\nDigite o valor do SAQUE: R$ "))
+            saque = Saque(valor)
+            if saque:
+                saque.registrar(conta)
+                print("\n",contas[indice - 1])
+            else:
+                print("ERRO: Saque não efetuado!")
+    
+    elif op == 3:
+        
+        numero = int(input("Informe o número da CONTA: "))
+            
+        while not isinstance(numero, int):
+            numero = input("Informe um número para a CONTA: ")
+        
+        conta = banco.buscar_conta_numero(numero)
+        
+        while not isinstance(conta, Conta):
+            numero = input("Informe um número de CONTA válido: ")
+        
+        print(conta)
+    
+    elif op == 4:
+        
+        print("######################### CADASTRAR CLIENTE #########################")
+        
+        cpf = input("CPF do Cliente (apenas números): ")
+        
+        while not banco.valida_cpf(cpf):
+            cpf = input("CPF do Cliente (apenas números): ")   
+        
+        nome = input("NOME do Cliente: ")
+        data_nascimento = datetime.strptime(input("Data de Nascimento (dd/mm/aaaa): "), "%d/%m/%Y")
+        endereco = input("Endereço (logradouro,num,bairro,cidade/uf): ")
+        cliente = PessoaFisica(cpf=cpf, nome=nome, data_nascimento=data_nascimento, endereco=endereco)
+        banco.adicionar_cliente(cliente)   
+        print(cliente)
+    
+    elif op == 5:
+        
+        print("##################### CADASTRAR CONTA CORRENTE #####################")
+        
+        numero = numero + 1
+        
+        cpf = input("CPF do Titular da Conta: ")
+        
+        while not banco.valida_cpf(cpf):
+            cpf = input("Informe um CPF válido: ")
+        
+        cliente = banco.buscar_cliente(cpf)
+
+        while not isinstance(cliente, PessoaFisica):
+            
+            cpf = input("Informe o CPF de um Cliente cadastrado: ")
+            
+            while not banco.valida_cpf(cpf):
+                cpf = input("Informe um CPF válido: ")
+            
+            cliente = banco.buscar_cliente(cpf)
+
+        conta = Conta(numero, cliente)    
+        
+        banco.adicionar_conta(conta)
+
+        print(conta)
+        
+    elif op == 6:  
+        
+        banco.listar_clientes()
+
+    elif op == 7:  
+        
+        cpf = input("Informe o CPF para consultar suas contas: ")
+        
+        while not banco.valida_cpf:
+            cpf = input("Informe um CPF válido: ")
+        
+        cliente = banco.buscar_cliente(cpf)
+        
+        while not isinstance(cliente, Cliente):
+            cpf = input("Informe o CPF de um Cliente cadastrado: ")
+            while not banco.valida_cpf:
+                cpf = input("Informe um CPF válido: ")
+            cliente = banco.buscar_cliente(cpf)
+
+        contas = banco.buscar_conta(cpf)
+        banco.listar_contas(contas, cliente)
+
+    elif op == 8:
+        break
+    
+    else:
+        print("Opção inválida")
